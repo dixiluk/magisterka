@@ -7,15 +7,151 @@ public class MapGeneratorWall : MonoBehaviour {
     public List<Room> ModelRoomList = new List<Room>();
     List<List<Vector3>> pointsNearSides = new List<List<Vector3>>(); // punty przy brzegach pokojow, z odpowiada zastrone sasiada 1 - prawa, 2 - lewa, 3 - gora, 4 - dol
 
+    System.DateTime time1;
     // Use this for initialization
     void Start () {
 		
 	}
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
+
+    // Update is called once per frame
+    void Update()
+    {
+
+
+        if (Input.GetKeyDown("space"))
+        {
+            List<Room> lista =  GenerateMap();
+            foreach (Room item in lista)
+            {
+                item.draw();
+            }
+
+        }
+        if (Input.GetKeyDown("a"))
+        {
+            time1 = System.DateTime.Now;
+            generateRoomModel(20);
+            Debug.Log((System.DateTime.Now - time1));
+        }
+        if (Input.GetKeyDown("s"))
+        {
+            ClearAll();
+        }
+        if (Input.GetKeyDown("d"))
+        {
+            DrawAll();
+        }
+        if (Input.GetKeyDown("f"))
+        {
+            Debug.Log("end");
+        }
+        if (Input.GetKeyDown("g"))
+        {
+        }
+        if (Input.GetKeyDown("q"))
+        {
+            // mapGeneratorPhysics.run(50);
+        }
+        if (Input.GetKeyDown("w"))
+        {
+            // wszystkieScieszki(mapGeneratorPhysics.roomList);
+        }
+
+
+    }
+
+
+
+    List<Room> GenerateMap()
+    {
+        generateRoomModel(20);
+        Room startRoom;
+        do
+        {
+            startRoom = ModelRoomList[(int)(UnityEngine.Random.value * (ModelRoomList.Count - 1))];
+            startRoom.findAllPath();
+        } while (startRoom.pathList.Count < ModelRoomList.Count);
+
+
+        List<Room> newRoomList = new List<Room>();
+        List<Path> pathList = startRoom.pathList;
+        pathList.RemoveAt(0);
+        newRoomList.Add(startRoom);
+        for (int i = 0; i < 6; i++)
+        {
+            if (pathList.Count == 0)
+                break;
+
+
+            Path longestPath = pathList[0];
+            foreach (Path path in pathList)
+            {
+                if (longestPath.length() < path.length())
+                    longestPath = path;
+            }
+
+
+            newRoomList.Add(longestPath.target);
+            foreach (Room room in longestPath.roomsBetween)
+            {
+                if (!newRoomList.Contains(room))
+                    newRoomList.Add(room);
+            }
+
+            for (int j = 0; j < pathList.Count; j++)
+            {
+                bool delete = false;
+                if (pathList[j].target == longestPath.target)   //usuniecie istniejacych pokoi z list celow nowych scierzek
+                {
+                    pathList.RemoveAt(j);
+                    j--;
+                    continue;
+
+                }
+                foreach (Room room in longestPath.roomsBetween)
+                {
+                    if (pathList[j].target == room)
+                    {
+                        delete = true;
+                        break;
+                    }
+                }
+                if (delete)
+                {
+                    pathList.RemoveAt(j);
+                    j--;
+                    continue;
+                }
+                if (longestPath.target.isNeighbour(pathList[j].target) != 0)   //usuniecie sasiadow konca ciezki
+                {
+                    pathList.RemoveAt(j);
+                    j--;
+                    continue;
+
+                }
+                for (int k = longestPath.roomsBetween.Count - 1; k > longestPath.roomsBetween.Count - 4; k--)
+                {
+                    if (k < 0)
+                        break;
+                    if (longestPath.roomsBetween[k].isNeighbour(pathList[j].target) != 0)
+                    {
+                        delete = true;
+                        break;
+                    }
+                }
+                if (delete)
+                {
+                    pathList.RemoveAt(j);
+                    j--;
+                    continue;
+                }
+
+            }
+
+        }
+        return newRoomList;
+
+    }
 
 
     public void generateRoomModel(int count)

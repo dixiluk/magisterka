@@ -78,8 +78,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\MapGenerator.cs" />
-    <Compile Include="Assets\MapGeneratorPhysics.cs" />
     <Compile Include="Assets\MapGeneratorWall.cs" />
     <Compile Include="Assets\Room.cs" />
   </ItemGroup>
