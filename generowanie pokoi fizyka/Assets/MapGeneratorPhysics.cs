@@ -8,26 +8,68 @@ public class MapGeneratorPhysics : MonoBehaviour {
 
     List<Vector3> oldPosition;
 
-    public GameObject physicsObject;
+    GameObject physicsObject;
 
     public int step = 0;
 
 
+    System.DateTime time1;
+
+
     public List<Room> roomList = new List<Room>();
-    
-    public void Update () {
+    private void FixedUpdate()
+    { 
         if (step == 1)
             if (checkPhysicsObjects())
             {
                 step = 2;
                 roomList = toRoomList();
                 findNeighbours();
-                DrawAll();
                 Time.timeScale = 1;
+                FindPaths(roomList);
             }
 
     }
+
+     void Update () {
+
+        
+        if (Input.GetKeyDown("space"))
+        {
+            run(50);
+
+        }
+        if (Input.GetKeyDown("a"))
+        {
+            time1 = System.DateTime.Now;
+            Debug.Log((System.DateTime.Now - time1));
+        }
+        if (Input.GetKeyDown("s"))
+        {
+        }
+        if (Input.GetKeyDown("d"))
+        {
+        }
+        if (Input.GetKeyDown("f"))
+        {
+            Debug.Log("end");
+        }
+        if (Input.GetKeyDown("g"))
+        {
+        }
+        if (Input.GetKeyDown("q"))
+        {
+           // mapGeneratorPhysics.run(50);
+        }
+        if (Input.GetKeyDown("w"))
+        {
+           // wszystkieScieszki(mapGeneratorPhysics.roomList);
+        }
     
+
+    }
+
+
 
     void findNeighbours()
     {
@@ -166,10 +208,11 @@ public class MapGeneratorPhysics : MonoBehaviour {
         }
         physicsObjectList.Clear();
         GameObject tmpGameObject;
+        float circleEangle = Mathf.Sqrt(count) * 8/2;
         for (int i = 0; i < count; i++)
         {
             tmpGameObject = Instantiate(physicsObject);
-            tmpGameObject.transform.position = (Random.insideUnitCircle * 5);
+            tmpGameObject.transform.position = (Random.insideUnitCircle * circleEangle);
             tmpGameObject.GetComponent<BoxCollider2D>().size = randomSize(8, 20, 8, 20);
             tmpGameObject.GetComponent<BoxCollider2D>().enabled = true;
             tmpGameObject.GetComponent<Renderer>().enabled = true;
@@ -178,6 +221,104 @@ public class MapGeneratorPhysics : MonoBehaviour {
 
 
     }
+
+    void FindPaths(List<Room> roomList)
+    {
+        Room startRoom;
+        do
+        {
+            startRoom = roomList[(int)(Random.value * (roomList.Count - 1))];
+            startRoom.findAllPath();
+        } while (startRoom.pathList.Count < roomList.Count/2);
+         
+        List<Room> newRoomList = new List<Room>();
+        List<Path> pathList = startRoom.pathList;
+        pathList.RemoveAt(0);
+        newRoomList.Add(startRoom);
+        for (int i = 0; i < 6; i++)
+        {
+            if (pathList.Count == 0)
+                break;
+
+
+            Path longestPath = pathList[0];
+            foreach (Path path in pathList)
+            {
+                if (longestPath.length() < path.length())
+                    longestPath = path;
+            }
+
+
+            newRoomList.Add(longestPath.target);
+            foreach (Room room in longestPath.roomsBetween)
+            {
+                if (!newRoomList.Contains(room))
+                    newRoomList.Add(room);
+            }
+
+            for (int j = 0; j < pathList.Count; j++)
+            {
+                bool delete = false;
+                if (pathList[j].target == longestPath.target)   //usuniecie istniejacych pokoi z list celow nowych scierzek
+                {
+                    pathList.RemoveAt(j);
+                    j--;
+                    continue;
+
+                }
+                foreach (Room room in longestPath.roomsBetween)
+                {
+                    if (pathList[j].target == room)
+                    {
+                        delete = true;
+                        break;
+                    }
+                }
+                if (delete)
+                {
+                    pathList.RemoveAt(j);
+                    j--;
+                    continue;
+                }
+                if (longestPath.target.isNeighbour(pathList[j].target) != 0)   //usuniecie sasiadow konca ciezki
+                {
+                    pathList.RemoveAt(j);
+                    j--;
+                    continue;
+
+                }
+                for (int k = longestPath.roomsBetween.Count - 1; k > longestPath.roomsBetween.Count - 4; k--)
+                {
+                    if (k < 0)
+                        break;
+                    if (longestPath.roomsBetween[k].isNeighbour(pathList[j].target) != 0)
+                    {
+                        delete = true;
+                        break;
+                    }
+                }
+                if (delete)
+                {
+                    pathList.RemoveAt(j);
+                    j--;
+                    continue;
+                }
+
+            }
+            Debug.Log(longestPath.texttt());
+
+        }
+
+
+        foreach (Room item in newRoomList)
+        {
+            item.draw();
+        }
+        
+
+    }
+
+
 
     Vector2 randomSize(int minX, int maxX, int minY, int maxY)
     {
@@ -212,4 +353,4 @@ public class MapGeneratorPhysics : MonoBehaviour {
         float fac = Mathf.Sqrt(-2.0f * Mathf.Log(S) / S);
         return u * fac;
     }
-}
+    }
