@@ -13,9 +13,7 @@ public class Room{
     public static int modelRoomCount = 50;
 
     static GameObject pokoj = Resources.Load("pokoj") as GameObject;
-
-    public static List<Room> ModelRoomList = new List<Room>();
-    public static List<Room> MapRoomList = new List<Room>();
+    
 
 
     public int index;
@@ -87,7 +85,7 @@ public class Room{
         }
     }
 
-    public static Room CreateModelRoom(float leftX, float bottomY, float rightX, float topY)
+    public static Room CreateModelRoom(float leftX, float bottomY, float rightX, float topY, List<Room> ModelRoomList)
     {
         foreach (Room room in ModelRoomList)
         {
@@ -99,25 +97,25 @@ public class Room{
         return newModelRoom;
     }
 
-    public static Room createModelRoom()
+    public static Room createModelRoom(List<Room> ModelRoomList)
     {
         Vector2 roomSize = randomSize(sizeMinX,sizeMaxX,sizeMinY,sizeMaxY);
         if (ModelRoomList.Count==0)
         {
-            return CreateModelRoom(0,0, roomSize.x, roomSize.y);
+            return CreateModelRoom(0,0, roomSize.x, roomSize.y, ModelRoomList);
         }
 
         Room newModelRoom;
         foreach (Room item in ModelRoomList)
         {
-            newModelRoom = item.createNeighbor(roomSize);
+            newModelRoom = item.createNeighbor(roomSize, ModelRoomList);
             if (newModelRoom != null)
                 return newModelRoom;
         }
         return null;
     }
 
-    public Room createNeighbor(Vector2 roomSize)
+    public Room createNeighbor(Vector2 roomSize, List<Room> ModelRoomList)
     {
         
         List<Vector2> copyPointsForNeighborsLT = pointsForNeighborsLT;
@@ -131,7 +129,7 @@ public class Room{
             Room newModelRoom;
             if (rnd < copyPointsForNeighborsLT.Count)
             {
-                newModelRoom = CreateModelRoom(copyPointsForNeighborsLT[rnd].x, copyPointsForNeighborsLT[rnd].y-roomSize.y, copyPointsForNeighborsLT[rnd].x+roomSize.x, copyPointsForNeighborsLT[rnd].y);
+                newModelRoom = CreateModelRoom(copyPointsForNeighborsLT[rnd].x, copyPointsForNeighborsLT[rnd].y-roomSize.y, copyPointsForNeighborsLT[rnd].x+roomSize.x, copyPointsForNeighborsLT[rnd].y, ModelRoomList);
                 if (newModelRoom != null)
                     return newModelRoom;
                 copyPointsForNeighborsLT.RemoveAt(rnd);
@@ -143,7 +141,7 @@ public class Room{
             rnd -= copyPointsForNeighborsLT.Count;
             if (rnd < copyPointsForNeighborsLB.Count)
             {
-                newModelRoom = CreateModelRoom(copyPointsForNeighborsLB[rnd].x, copyPointsForNeighborsLB[rnd].y, copyPointsForNeighborsLB[rnd].x+ roomSize.x, copyPointsForNeighborsLB[rnd].y+ roomSize.y);
+                newModelRoom = CreateModelRoom(copyPointsForNeighborsLB[rnd].x, copyPointsForNeighborsLB[rnd].y, copyPointsForNeighborsLB[rnd].x+ roomSize.x, copyPointsForNeighborsLB[rnd].y+ roomSize.y, ModelRoomList);
                 if (newModelRoom != null)
                     return newModelRoom;
                 copyPointsForNeighborsLB.RemoveAt(rnd);
@@ -154,7 +152,7 @@ public class Room{
             rnd -= copyPointsForNeighborsLB.Count;
             if (rnd < copyPointsForNeighborsRT.Count)
             {
-                newModelRoom = CreateModelRoom(copyPointsForNeighborsRT[rnd].x- roomSize.x, copyPointsForNeighborsRT[rnd].y- roomSize.y, copyPointsForNeighborsRT[rnd].x, copyPointsForNeighborsRT[rnd].y);
+                newModelRoom = CreateModelRoom(copyPointsForNeighborsRT[rnd].x- roomSize.x, copyPointsForNeighborsRT[rnd].y- roomSize.y, copyPointsForNeighborsRT[rnd].x, copyPointsForNeighborsRT[rnd].y, ModelRoomList);
                 if (newModelRoom != null)
                     return newModelRoom;
                 copyPointsForNeighborsRT.RemoveAt(rnd);
@@ -165,7 +163,7 @@ public class Room{
             rnd -= copyPointsForNeighborsRT.Count;
             if (rnd < copyPointsForNeighborsRB.Count)
             {
-                newModelRoom = CreateModelRoom(copyPointsForNeighborsRB[rnd].x- roomSize.x, copyPointsForNeighborsRB[rnd].y, copyPointsForNeighborsRB[rnd].x, copyPointsForNeighborsRB[rnd].y+ roomSize.y);
+                newModelRoom = CreateModelRoom(copyPointsForNeighborsRB[rnd].x- roomSize.x, copyPointsForNeighborsRB[rnd].y, copyPointsForNeighborsRB[rnd].x, copyPointsForNeighborsRB[rnd].y+ roomSize.y, ModelRoomList);
                 if (newModelRoom != null)
                     return newModelRoom;
                 copyPointsForNeighborsRB.RemoveAt(rnd);
@@ -177,7 +175,7 @@ public class Room{
         return null;
     }
 
-    void clearPointsForNeighbors()
+    void clearPointsForNeighbors(List<Room> ModelRoomList)
     {
         List<Vector2> pointsForNeighborsLT = new List<Vector2>();
         List<Vector2> pointsForNeighborsLB = new List<Vector2>();
@@ -307,9 +305,9 @@ public class Room{
 
     }
 
-    public void findNeighbours()
+    public void findNeighbours(List<Room> ModelRoomList)
     {
-        foreach (Room room in Room.ModelRoomList)
+        foreach (Room room in ModelRoomList)
         {
             if(room.Colision(leftX + doorSize + 1, bottomY - 1, rightX - doorSize - 1, bottomY - 1))
             {
@@ -467,137 +465,8 @@ public class Room{
         return false;
 
     }
+    
 
-    public static void GenerateMap()
-    {
-        MapRoomList.Clear();
-        for (int i = 0; i < modelRoomCount; i++)
-        {
-            if (createModelRoom() == null)
-                Debug.Log("jakis blad 212");
-        }
-        findAllNeighbours();
-        Debug.Log("1");
-        Room startRoom;
-        do
-        {
-            startRoom = Room.ModelRoomList[(int)(UnityEngine.Random.value * (ModelRoomList.Count - 1))];
-            startRoom.findAllPath();
-        } while (startRoom.pathList.Count < ModelRoomList.Count);
-
-
-        List<Room> newRoomList = new List<Room>();
-        List<Path> pathList = startRoom.pathList;
-        pathList.RemoveAt(0);
-        MapRoomList.Add(startRoom);
-        for (int i = 0; i < pathCount; i++)
-        {
-            if (pathList.Count == 0)
-                break;
-
-
-            Path longestPath = pathList[0];
-            foreach (Path path in pathList)
-            {
-                if (longestPath.length() < path.length())
-                    longestPath = path;
-            }
-
-
-            MapRoomList.Add(longestPath.target);
-            foreach (Room room in longestPath.roomsBetween)
-            {
-                if (!MapRoomList.Contains(room))
-                    MapRoomList.Add(room);
-            }
-
-            for (int j = 0; j < pathList.Count; j++)
-            {
-                bool delete = false;
-                if (pathList[j].target == longestPath.target)   //usuniecie istniejacych pokoi z list celow nowych scierzek
-                {
-                    pathList.RemoveAt(j);
-                    j--;
-                    continue;
-
-                }
-                foreach (Room room in longestPath.roomsBetween)
-                {
-                    if (pathList[j].target == room)
-                    {
-                        delete = true;
-                        break;
-                    }
-                }
-                if (delete)
-                {
-                    pathList.RemoveAt(j);
-                    j--;
-                    continue;
-                }
-                if (longestPath.target.isNeighbour(pathList[j].target) != 0)   //usuniecie sasiadow konca ciezki
-                {
-                    pathList.RemoveAt(j);
-                    j--;
-                    continue;
-
-                }
-                for (int k = longestPath.roomsBetween.Count - 1; k > longestPath.roomsBetween.Count - 4; k--)
-                {
-                    if (k < 0)
-                        break;
-                    if (longestPath.roomsBetween[k].isNeighbour(pathList[j].target) != 0)
-                    {
-                        delete = true;
-                        break;
-                    }
-                }
-                if (delete)
-                {
-                    pathList.RemoveAt(j);
-                    j--;
-                    continue;
-                }
-
-            }
-
-        }
-
-    }
-
-
-
-    static public void DrawModel()
-    {
-        foreach (Room room in ModelRoomList)
-        {
-            room.draw();
-        }
-    }
-    static public void DrawMap()
-    {
-        foreach (Room room in MapRoomList)
-        {
-            room.draw();
-        }
-    }
-    static public void ClearAll()
-    {
-        foreach (Room room in ModelRoomList)
-        {
-            room.clear();
-        }
-    }
-
-
-
-    static public void findAllNeighbours()
-    {
-        for (int i = 0; i < ModelRoomList.Count; i++)
-        {
-            ModelRoomList[i].findNeighbours();
-        }
-    }
 
     string text() //only to test
     {
